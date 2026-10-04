@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flat hunt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e9eef2;--panel:#fff;--ink:#17222d;--mute:#5b6b7a;--line:#cfd8e0;--accent:#0e5a6b;--accent-ink:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#10171d;--panel:#1a242d;--ink:#e8eef3;--mute:#93a3b1;--line:#2c3a46;--accent:#5cc0d6;--accent-ink:#06222a}}:root[data-theme=dark]{--bg:#10171d;--panel:#1a242d;--ink:#e8eef3;--mute:#93a3b1;--line:#2c3a46;--accent:#5cc0d6;--accent-ink:#06222a;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 'Bricolage Grotesque',system-ui,sans-serif}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:14px 20px;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+h1{font-size:22px;font-weight:800;margin:0 12px 0 0}
+nav{display:flex;gap:4px}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:7px 12px}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+nav button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.sp{flex:1}
+main{padding:20px;max-width:1400px;margin:0 auto}
+.prefs{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.prefs summary{cursor:pointer;font-weight:600}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:12px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mute)}
+label.f input,label.f select,label.f textarea{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 9px;color:var(--ink);width:100%}
+label.chk{flex-direction:row;align-items:center;gap:8px;color:var(--ink)}
+label.chk input{width:auto}
+.legend{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mute);margin-top:12px}
+.bar{height:8px;width:160px;border-radius:4px;background:linear-gradient(90deg,hsl(135 62% 40%),hsl(68 62% 36%),hsl(0 62% 28%))}
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:20px}
+.tile{background:var(--panel);border-radius:14px;border:5px solid var(--ring);box-shadow:0 0 0 1px rgba(0,0,0,.04);overflow:hidden;display:flex;flex-direction:column;transition:transform .15s}
+.tile.moved{animation:pop .35s}
+@keyframes pop{from{transform:scale(.97)}to{transform:none}}
+@media (prefers-reduced-motion:reduce){.tile.moved{animation:none}}
+.img{position:relative;aspect-ratio:16/10;background:linear-gradient(135deg,var(--line),var(--bg));cursor:pointer}
+.img img{width:100%;height:100%;object-fit:cover;display:block}
+.noimg{position:absolute;inset:0;display:grid;place-items:center;color:var(--mute);font-size:13px;text-align:center;padding:10px}
+.badge{position:absolute;top:8px;left:8px;background:var(--ink);color:var(--bg);border-radius:999px;min-width:30px;height:30px;display:grid;place-items:center;font-weight:800;padding:0 8px}
+.star{position:absolute;top:8px;right:8px;border-radius:999px;width:34px;height:34px;padding:0;font-size:18px;line-height:1}
+.star.on{background:#f2b705;border-color:#f2b705;color:#222}
+.src{position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.72);color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;text-decoration:none}
+.body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.addr{font-weight:600;font-size:16px;line-height:1.25;cursor:pointer}
+.price{font-size:22px;font-weight:800}.price small{font-size:14px;font-weight:400;color:var(--mute);margin-left:6px}
+.facts{color:var(--mute)}
+.note{font-size:13px;background:var(--bg);border-radius:8px;padding:6px 8px;white-space:pre-wrap;max-height:4.6em;overflow:hidden}
+.why{font-size:12px;color:var(--mute)}
+.rankbtns{display:flex;gap:6px;margin-top:auto;padding-top:6px}
+.rankbtns button{padding:3px 10px}
+table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:12px;overflow:hidden}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:13px;color:var(--mute);font-weight:600}
+tr.row{cursor:pointer}tr.row:hover{background:var(--bg)}
+.thumb{width:84px;height:54px;object-fit:cover;border-radius:6px;display:block;background:var(--line)}
+.dot{display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:middle}
+.scroll{overflow-x:auto}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);width:min(560px,94vw);padding:20px}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form .w{grid-column:1/-1}
+.row2{display:flex;gap:8px;align-items:end}.row2 label{flex:1}
+.msg{font-size:13px;color:var(--mute);min-height:1.2em}
+.empty{padding:40px;text-align:center;color:var(--mute)}
+.bubble{width:34px;height:34px;border-radius:50%;background:var(--ring);color:#fff;border:3px solid #fff;display:grid;place-items:center;font-weight:800;box-shadow:0 1px 6px rgba(0,0,0,.45);font-family:'Bricolage Grotesque',system-ui,sans-serif}
+.work{background:#17222d;color:#fff;border-radius:6px;padding:3px 8px;font-weight:600;text-align:center;font-size:12px;border:2px solid #fff}
+#map{position:relative;z-index:0;height:68vh;border-radius:12px;border:1px solid var(--line)}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:1px 8px;color:var(--mute)}
+.chip.ok{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.chip.bad{background:#b3261e;color:#fff;border-color:#b3261e}
+.tile.arch{opacity:.6}
+.prog{display:grid;grid-template-columns:1fr 1fr;gap:10px;border-top:1px solid var(--line);padding-top:12px}
+#fVid{width:100%;border-radius:8px;display:none}
+dialog{max-height:92vh;overflow:auto}
+#ltr{width:min(720px,95vw)}
+#ltr textarea{font:13px/1.5 system-ui,sans-serif}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+</head>
+<body>
+<header>
+  <h1>Flat hunt</h1>
+  <nav><button id="nb" class="on">Board</button><button id="nr">Browse</button><button id="nm">Map</button><button id="ns">Settings</button></nav>
+  <span class="sp"></span>
+  <button id="exp">Export</button>
+  <button id="imp">Import</button>
+  <input type="file" id="file" accept=".json" hidden>
+  <button class="primary" id="add">Add listing</button>
+</header>
+<main>
+  <details class="prefs" id="prefs" open>
+    <summary>My preferences</summary>
+    <div class="pgrid">
+      <label class="f">Ideal price (£/month)<input type="number" id="pIdeal" min="0" step="50"></label>
+      <label class="f">Count a miss every<select id="pStep"><option value="100">£100 over</option><option value="150">£150 over</option><option value="200">£200 over</option></select></label>
+      <label class="f">Min bedrooms (0 = don't mind)<input type="number" id="pBeds" min="0" step="1"></label>
+      <label class="f">Min bathrooms (0 = don't mind)<input type="number" id="pBaths" min="0" step="0.5"></label>
+      <label class="f">USD per £1<input type="number" id="pRate" min="0" step="0.01"></label>
+      <label class="f chk" style="justify-content:end"><span><input type="checkbox" id="pGarden"> Must have a garden</span></label>
+      <label class="f" style="grid-column:span 2">Preferred areas (comma separated)<input id="pAreas"></label>
+      <label class="f chk" style="justify-content:end"><span><input type="checkbox" id="pAreaOn"> Count areas as a preference</span></label>
+      <label class="f" style="grid-column:span 2">Workplace (for distance)<input id="pWork"></label>
+    </div>
+    <div class="legend"><span>All preferences met</span><span class="bar"></span><span>5 or more missed</span><span id="rateNote"></span></div>
+  </details>
+  <section id="vBoard">
+    <div class="tools">
+      <label class="f">Order tiles by<select id="bSort"><option value="rank">My ranking</option><option value="match">Best match</option><option value="price">Price, low to high</option><option value="dist">Closest to work</option></select></label>
+      <label class="f">Show<select id="bShow"><option value="active">Active</option><option value="archived">Archived</option><option value="all">All</option></select></label>
+      <label class="f chk" style="flex-direction:row;align-items:center"><input type="checkbox" id="bFav"> Favourites only</label>
+      <label class="f">Added by<select id="bBy"></select></label>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+  <section id="vMap" hidden>
+    <div class="msg" id="mapMsg" style="margin-bottom:8px"></div>
+    <div id="map"></div>
+  </section>
+  <section id="vBrowse" hidden>
+    <div class="tools">
+      <label class="f">Search<input id="qText" placeholder="Address, notes, site"></label>
+      <label class="f">Sort by<select id="qSort"><option value="price">Price</option><option value="beds">Bedrooms</option><option value="baths">Bathrooms</option><option value="dist">Distance to work</option><option value="miss">Preferences missed</option><option value="rank">My ranking</option><option value="added">Date added</option></select></label>
+      <label class="f">Direction<select id="qDir"><option value="1">Low to high</option><option value="-1">High to low</option></select></label>
+      <label class="f">Min beds<input type="number" id="qBeds" min="0" style="width:90px"></label>
+      <label class="f">Max £/month<input type="number" id="qMax" min="0" style="width:120px"></label>
+      <label class="f chk" style="flex-direction:row;align-items:center"><input type="checkbox" id="qGarden"> Garden only</label>
+      <label class="f">Show<select id="qShow"><option value="active">Active</option><option value="archived">Archived</option><option value="all">All</option></select></label>
+      <label class="f chk" style="flex-direction:row;align-items:center"><input type="checkbox" id="qFav"> Favourites only</label>
+      <label class="f">Added by<select id="qBy"></select></label>
+    </div>
+    <div class="scroll"><table><thead><tr><th></th><th>Address</th><th>£/month</th><th>$/month</th><th>Bed</th><th>Bath</th><th>Garden</th><th>To work</th><th>Site</th><th>Missed</th><th>Fav</th></tr></thead><tbody id="tbody"></tbody></table></div>
+  </section>
+  <section id="vSet" hidden><div class="prefs" style="max-width:520px"><div class="pgrid" style="grid-template-columns:1fr">
+    <div class="msg">Signed in as <b id="sWho"></b></div>
+    <label class="f">Display name (shown on listings you add)<input id="sName"></label>
+    <label class="f">Appearance (just for you)<select id="sTheme"><option value="system">Match my device</option><option value="light">Light mode</option><option value="dark">Dark mode</option></select></label>
+    <button id="sOut" type="button">Sign out</button></div></div></section>
+</main>
+<dialog id="auth"><div class="form">
+  <h2 class="w" style="margin:0">Flat hunt</h2>
+  <div class="msg w" id="aMsg">Sign in with your email.</div>
+  <label class="f w">Email<input id="aEmail" type="email" autocomplete="username"></label>
+  <label class="f w">Password<input id="aPass" type="password" autocomplete="current-password"></label>
+  <div class="w" style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" id="aIn" type="button">Sign in</button><button id="aUp" type="button">Create account</button><button id="aReset" type="button">Forgot password</button></div>
+  <div class="w" id="aVer" style="display:none;gap:8px;flex-wrap:wrap"><button id="aResend" type="button">Resend verification email</button><button class="primary" id="aDone" type="button">I’ve verified, continue</button></div>
+</div></dialog>
+
+<dialog id="dlg">
+  <form method="dialog" id="frm" class="form">
+    <label class="f w">Listing link
+      <div class="row2"><label class="f" style="margin:0"><input id="fLink" type="url" placeholder="https://www.rightmove.co.uk/..."></label><button type="button" id="fetchBtn">Fetch photo</button></div>
+    </label>
+    <div class="msg w" id="fMsg"></div>
+    <label class="f w">Address<input id="fAddr" required></label>
+    <label class="f">Price (£/month)<input id="fPrice" type="number" min="0" step="1" required></label>
+    <label class="f">Photo address (optional override)<input id="fImg" type="url" placeholder="https://..."></label>
+    <label class="f">Bedrooms<input id="fBeds" type="number" min="0" step="1"></label>
+    <label class="f">Bathrooms<input id="fBaths" type="number" min="0" step="0.5"></label>
+    <label class="f chk w"><span><input type="checkbox" id="fGarden"> Has a garden</span></label>
+    <label class="f w">Notes<textarea id="fNotes" rows="4"></textarea></label>
+    <div class="prog w">
+      <label class="f chk"><span><input type="checkbox" id="fReplied"> Agent got back to me</span></label>
+      <label class="f chk"><span><input type="checkbox" id="fApplied"> Application submitted</span></label>
+      <label class="f chk"><span><input type="checkbox" id="fTour"> Tour scheduled</span></label>
+      <label class="f">Tour date<input type="date" id="fTourDate"></label>
+      <label class="f chk w"><span><input type="checkbox" id="fPet"> Turned us down because of our pet</span></label>
+      <label class="f chk"><span><input type="checkbox" id="fSeen"> Watched the video tour</span></label>
+      <label class="f">Video tour link<input type="url" id="fVLink" placeholder="https://..."></label>
+      <label class="f w">Upload the video tour<input type="file" id="fVFile" accept="video/*"></label>
+      <div class="msg w" id="fVMsg"></div>
+      <video id="fVid" controls></video>
+      <button type="button" id="fVRm" class="w" style="display:none">Remove uploaded video</button>
+    </div>
+    <div class="w" style="display:flex;gap:8px">
+      <button type="button" id="fDel" style="color:#b3261e">Delete</button><button type="button" id="fArch">Archive</button><button type="button" id="fLetter">Pet refusal letter</button><span class="sp"></span>
+      <button type="button" id="fCancel">Cancel</button><button class="primary" id="fSave" type="submit">Save listing</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="ltr">
+  <div class="form">
+    <label class="f w">Send to<select id="lTo"><option value="agent">The letting agent: ask for the reason in writing</option><option value="council">My local council: report it and ask for advice</option></select></label>
+    <label class="f">Your name<input id="lName"></label>
+    <label class="f">Your email or phone<input id="lContact"></label>
+    <label class="f">Your pet<input id="lPet" placeholder="e.g. one medium-sized dog"></label>
+    <label class="f">Date you were turned down<input type="date" id="lDate"></label>
+    <label class="f">Agent or landlord name<input id="lAgent"></label>
+    <label class="f">Agent email<input type="email" id="lAgentEmail"></label>
+    <label class="f">How you were told<select id="lHow"><option>by phone</option><option>by email</option><option>in person</option><option>through the listing site</option></select></label>
+    <label class="f">Reason they gave (optional)<input id="lReason"></label>
+    <label class="f w">Letter (it rebuilds when you change a field above, so edit the text last)<textarea id="lText" rows="15"></textarea></label>
+    <div class="w" style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="primary" id="lMail">Open in email</button><button type="button" id="lCopy">Copy</button><button type="button" id="lDl">Download .txt</button><span class="sp"></span><button type="button" id="lClose">Close</button></div>
+    <div class="msg w" id="lMsg"></div>
+    <div class="w why">
+      Where to send it:<br>
+      <a href="https://www.gov.uk/find-local-council" target="_blank" rel="noopener">Find the council for the property (enter its postcode)</a><br>
+      <a href="https://www.gov.uk/guidance/renting-out-your-property-guidance-for-landlords-and-letting-agents/if-a-tenant-wants-a-pet-to-live-with-them" target="_blank" rel="noopener">GOV.UK: the rules on pets for landlords and agents</a><br>
+      <a href="https://www.tpos.co.uk" target="_blank" rel="noopener">The Property Ombudsman</a> or <a href="https://www.theprs.co.uk" target="_blank" rel="noopener">Property Redress Scheme</a> (whichever scheme the agent belongs to)
+    </div>
+  </div>
+</dialog>
+
+<script>
+const $=id=>document.getElementById(id);
+/* ===== PASTE YOUR OWN VALUES (see SETUP.md) ===== */
+const FB={apiKey:'PASTE',authDomain:'PASTE',projectId:'PASTE',appId:'PASTE'};
+const WORKER_URL='PASTE';
+const KEY='flatHunt.v1';
+let S={listings:[],prefs:{ideal:1800,step:150,beds:1,baths:1,garden:true,rate:1.34}};
+try{const r=JSON.parse(localStorage.getItem(KEY));if(r&&r.listings)S=r}catch(e){}
+const defP=()=>({areas:'Kidlington, Farmoor, Cumnor, Abingdon',areaOn:true,work:'Old Road Campus Research Building, Oxford',workLL:[51.7522,-1.2150]});
+S.prefs=Object.assign(defP(),S.prefs);
+let map,layer,fitted=false;
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+  if(!ready)return;clearTimeout(tmr);tmr=setTimeout(()=>{pend++;ref().set({json:JSON.stringify(S),by:ME.email,at:Date.now()}).catch(e=>alert('Couldn’t save: '+e.message)).finally(()=>pend--)},600)};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const gbp=n=>'£'+Math.round(n).toLocaleString('en-GB');
+const usd=n=>'$'+Math.round(n*S.prefs.rate).toLocaleString('en-US');
+const site=u=>{try{return new URL(u).hostname.replace(/^www\./,'')}catch(e){return ''}};
+
+function misses(l){
+  const p=S.prefs,why=[];let n=0;
+  if(p.ideal>0&&l.price>p.ideal){const k=Math.ceil((l.price-p.ideal)/p.step);n+=k;why.push(`${gbp(l.price-p.ideal)} over ideal price (${k})`)}
+  if(p.beds>0&&(l.beds||0)<p.beds){n++;why.push(`under ${p.beds} bed`)}
+  if(p.baths>0&&(l.baths||0)<p.baths){n++;why.push(`under ${p.baths} bath`)}
+  if(p.garden&&!l.garden){n++;why.push('no garden')}
+  if(p.areaOn&&p.areas.trim()){const al=p.areas.split(',').map(x=>x.trim().toLowerCase().replace('kidd','kid')).filter(Boolean);
+    if(!al.some(x=>l.addr.toLowerCase().includes(x))){n++;why.push('outside preferred areas')}}
+  return{n,why};
+}
+const ACT=()=>S.listings.filter(x=>!x.archived);
+const rk=l=>ACT().indexOf(l);
+function chips(l){const c=[];if(l.addedBy)c.push('<span class="chip">Added by '+esc(nm(l.addedBy))+'</span>');
+  if(l.replied)c.push('<span class="chip ok">Agent replied</span>');
+  if(l.tour)c.push(`<span class="chip ok">Tour booked${l.tourDate?' '+esc(l.tourDate):''}</span>`);
+  if(l.applied)c.push('<span class="chip ok">Applied</span>');
+  if(l.petRefused)c.push('<span class="chip bad">Turned down for pet</span>');
+  if(l.videoSeen)c.push('<span class="chip ok">Video watched</span>');
+  else if(l.videoName||l.videoLink)c.push('<span class="chip">Video available</span>');
+  if(l.archived)c.push('<span class="chip">Archived</span>');
+  return c.join(' ');
+}
+function D(l){
+  if(l.lat==null||!S.prefs.workLL)return null;
+  const r=x=>x*Math.PI/180,[a,b]=S.prefs.workLL,dl=r(l.lat-a),dn=r(l.lng-b);
+  const h=Math.sin(dl/2)**2+Math.cos(r(a))*Math.cos(r(l.lat))*Math.sin(dn/2)**2;
+  return 3958.8*2*Math.asin(Math.sqrt(h));
+}
+function distTxt(l,short){
+  const d=D(l);
+  if(d==null)return l.geoFail?(short?'?':'Location not found. Add a postcode.'):(short?'…':'Locating…');
+  return short?`${d.toFixed(1)} mi`:`${d.toFixed(1)} mi (straight line) from work`;
+}
+function ring(n){const t=Math.min(n,5)/5;return `hsl(${Math.round(135*(1-t))} 62% ${Math.round(40-12*t)}%)`}
+
+function sortedBoard(){
+  let a=S.listings.map(l=>({l,i:rk(l),m:misses(l)})).filter(x=>{const v=$('bShow').value;return v==='all'||(v==='archived')===!!x.l.archived});
+  if($('bFav').checked)a=a.filter(x=>x.l.fav);
+  if($('bBy').value)a=a.filter(x=>x.l.addedBy===$('bBy').value);
+  const s=$('bSort').value;
+  if(s==='match')a.sort((x,y)=>x.m.n-y.m.n||x.l.price-y.l.price);
+  if(s==='price')a.sort((x,y)=>x.l.price-y.l.price);
+  if(s==='dist')a.sort((x,y)=>(D(x.l)??1e9)-(D(y.l)??1e9));
+  return a;
+}
+let movedId=null;
+function renderBoard(){
+  const a=sortedBoard(),rank=$('bSort').value==='rank';
+  if(!S.listings.length){$('grid').innerHTML='<div class="empty" style="grid-column:1/-1">No listings yet. Choose “Add listing” and paste a link to start.</div>';return}
+  $('grid').innerHTML=a.map(({l,i,m})=>`
+  <article class="tile${l.id===movedId?' moved':''}${l.archived?' arch':''}" style="--ring:${ring(m.n)}">
+    <div class="img" data-edit="${l.id}">
+      ${l.img?`<img src="${esc(l.img)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`:''}
+      <div class="noimg">${l.img?'':'No photo yet. Edit to fetch or paste one.'}</div>
+      <span class="badge" title="Rank">${i<0?'–':'#'+(i+1)}</span>
+      <button class="star${l.fav?' on':''}" data-fav="${l.id}" aria-label="Favourite" aria-pressed="${!!l.fav}">${l.fav?'★':'☆'}</button>
+      ${l.link?`<a class="src" href="${esc(l.link)}" target="_blank" rel="noopener">${esc(site(l.link))}</a>`:''}
+    </div>
+    <div class="body">
+      <div class="addr" data-edit="${l.id}">${esc(l.addr)}</div>
+      <div class="price">${gbp(l.price)}/mo<small>${usd(l.price)}/mo</small></div>
+      <div class="facts">${l.beds??'–'} bed · ${l.baths??'–'} bath · ${l.garden?'Garden':'No garden'}</div>
+      <div class="facts">${distTxt(l)}</div>
+      ${l.notes?`<div class="note">${esc(l.notes)}</div>`:''}
+      <div class="why">${m.n?`Misses ${m.n}: ${esc(m.why.join(', '))}`:'Meets every preference'}</div>
+      <div class="chips">${chips(l)}</div>${l.petRefused?`<button data-letter="${l.id}" style="align-self:flex-start">Pet refusal letter</button>`:''}
+      ${rank&&i>=0?`<div class="rankbtns"><button data-mv="${l.id}" data-d="-1" ${i===0?'disabled':''} aria-label="Rank higher">▲ Higher</button><button data-mv="${l.id}" data-d="1" ${i===ACT().length-1?'disabled':''} aria-label="Rank lower">▼ Lower</button></div>`:''}
+    </div>
+  </article>`).join('')||'<div class="empty" style="grid-column:1/-1">No favourites yet.</div>';
+  movedId=null;
+}
+function renderBrowse(){
+  const q=$('qText').value.toLowerCase(),mb=+$('qBeds').value||0,mx=+$('qMax').value||0;
+  let a=S.listings.map(l=>({l,i:rk(l),m:misses(l)})).filter(({l})=>($('qShow').value==='all'||($('qShow').value==='archived')===!!l.archived)&&
+    (!q||(l.addr+' '+l.notes+' '+site(l.link)).toLowerCase().includes(q))&&(l.beds||0)>=mb&&(!mx||l.price<=mx)&&(!$('qGarden').checked||l.garden)&&(!$('qFav').checked||l.fav)&&(!$('qBy').value||l.addedBy===$('qBy').value));
+  const k=$('qSort').value,d=+$('qDir').value;
+  const val=x=>({dist:D(x.l)??1e9,price:x.l.price,beds:x.l.beds||0,baths:x.l.baths||0,miss:x.m.n,rank:x.i,added:x.l.id})[k];
+  a.sort((x,y)=>(val(x)-val(y))*d);
+  $('tbody').innerHTML=a.map(({l,i,m})=>`<tr class="row" data-edit="${l.id}">
+    <td>${l.img?`<img class="thumb" src="${esc(l.img)}" alt="" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">`:'<div class="thumb"></div>'}</td>
+    <td><strong>${esc(l.addr)}</strong><div class="why">${esc(l.notes).slice(0,70)}</div><div class="chips">${chips(l)}</div></td>
+    <td>${gbp(l.price)}</td><td>${usd(l.price)}</td><td>${l.beds??'–'}</td><td>${l.baths??'–'}</td><td>${l.garden?'Yes':'No'}</td><td>${distTxt(l,1)}</td>
+    <td>${l.link?`<a href="${esc(l.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(site(l.link))}</a>`:''}</td>
+    <td><span class="dot" style="background:${ring(m.n)}"></span> ${m.n}</td>
+    <td><button class="star-lite" data-fav="${l.id}" style="padding:2px 8px" aria-label="Favourite">${l.fav?'★':'☆'}</button></td></tr>`).join('')
+    ||'<tr><td colspan="11" class="empty">Nothing matches these filters.</td></tr>';
+}
+const render=()=>{fillBy();renderBoard();renderBrowse();if(map&&!$('vMap').hidden)drawMap();$('rateNote').textContent=`  Rate: £1 = $${S.prefs.rate}`};
+
+/* navigation */
+function show(v){$('vBoard').hidden=v!=='b';$('vBrowse').hidden=v!=='r';$('vMap').hidden=v!=='m';$('vSet').hidden=v!=='s';['nb','nr','nm','ns'].forEach(id=>$(id).classList.toggle('on',id==='n'+v))}
+$('nb').onclick=()=>show('b');$('nr').onclick=()=>show('r');$('nm').onclick=()=>{show('m');renderMap()};$('ns').onclick=()=>show('s');
+
+/* preferences */
+function loadPrefs(){const p=S.prefs;$('pIdeal').value=p.ideal||'';$('pStep').value=p.step;$('pBeds').value=p.beds;$('pBaths').value=p.baths;$('pGarden').checked=p.garden;$('pRate').value=p.rate;$('pAreas').value=p.areas;$('pAreaOn').checked=p.areaOn;$('pWork').value=p.work}
+['pAreas','pAreaOn','pWork','pIdeal','pStep','pBeds','pBaths','pGarden','pRate'].forEach(id=>$(id).addEventListener('input',()=>{
+  S.prefs={...S.prefs,areas:$('pAreas').value,areaOn:$('pAreaOn').checked,work:$('pWork').value,ideal:+$('pIdeal').value||0,step:+$('pStep').value,beds:+$('pBeds').value||0,baths:+$('pBaths').value||0,garden:$('pGarden').checked,rate:+$('pRate').value||1.34};
+  save();render()}));
+fetch('https://api.frankfurter.app/latest?from=GBP&to=USD').then(r=>r.json()).then(d=>{
+  if(d&&d.rates&&d.rates.USD&&!S.rateSet){S.prefs.rate=+d.rates.USD.toFixed(3);S.rateSet=1;save();loadPrefs();render()}}).catch(()=>{});
+
+/* board / browse controls */
+['bSort','bFav','bShow','bBy'].forEach(id=>$(id).addEventListener('input',renderBoard));
+['qText','qShow','qSort','qDir','qBeds','qMax','qGarden','qFav','qBy'].forEach(id=>$(id).addEventListener('input',renderBrowse));
+document.addEventListener('click',e=>{
+  const f=e.target.closest('[data-fav]');
+  if(f){const l=S.listings.find(x=>x.id==f.dataset.fav);l.fav=!l.fav;save();render();return}
+  const m=e.target.closest('[data-mv]');
+  if(m){const i=S.listings.findIndex(x=>x.id==m.dataset.mv),dd=+m.dataset.d;let j=i+dd;while(S.listings[j]&&S.listings[j].archived)j+=dd;
+    if(j>=0&&j<S.listings.length){[S.listings[i],S.listings[j]]=[S.listings[j],S.listings[i]];movedId=S.listings[j].id;save();render()}return}
+  const lt=e.target.closest('[data-letter]');if(lt){openLetter(+lt.dataset.letter);return}
+  const ed=e.target.closest('[data-edit]');
+  if(ed&&!e.target.closest('a'))openDlg(+ed.dataset.edit);
+});
+
+/* dialog */
+let editing=null,curId=0,curVideo='';
+function openDlg(id){
+  editing=id?S.listings.find(x=>x.id===id):null;const l=editing||{};curId=editing?editing.id:Date.now();curVideo=l.videoName||'';
+  $('fLink').value=l.link||'';$('fAddr').value=l.addr||'';$('fPrice').value=l.price??'';$('fImg').value=l.img||'';
+  $('fBeds').value=l.beds??'';$('fBaths').value=l.baths??'';$('fGarden').checked=!!l.garden;$('fNotes').value=l.notes||'';
+  $('fDel').style.display=editing?'':'none';
+  $('fReplied').checked=!!l.replied;$('fApplied').checked=!!l.applied;$('fTour').checked=!!l.tour;$('fTourDate').value=l.tourDate||'';
+  $('fPet').checked=!!l.petRefused;$('fSeen').checked=!!l.videoSeen;$('fVLink').value=l.videoLink||'';$('fVFile').value='';
+  $('fArch').style.display=$('fLetter').style.display=editing?'':'none';$('fArch').textContent=l.archived?'Restore':'Archive';showVid();$('fMsg').textContent='';curLL=null;$('dlg').showModal();
+}
+$('add').onclick=()=>openDlg(null);
+$('fCancel').onclick=()=>{if(!editing&&curVideo)vdel(curId).catch(()=>{});$('dlg').close()};
+$('fDel').onclick=()=>{if(confirm('Delete this listing?')){vdel(editing.id).catch(()=>{});S.listings=S.listings.filter(x=>x!==editing);save();render();$('dlg').close()}};
+$('frm').addEventListener('submit',()=>{
+  const v={link:$('fLink').value.trim(),addr:$('fAddr').value.trim(),price:+$('fPrice').value,img:$('fImg').value.trim(),
+    beds:$('fBeds').value===''?null:+$('fBeds').value,baths:$('fBaths').value===''?null:+$('fBaths').value,garden:$('fGarden').checked,notes:$('fNotes').value,
+    replied:$('fReplied').checked,applied:$('fApplied').checked,tour:$('fTour').checked,tourDate:$('fTourDate').value,
+    petRefused:$('fPet').checked,videoSeen:$('fSeen').checked,videoLink:$('fVLink').value.trim(),videoName:curVideo};
+  if(curLL){v.lat=curLL[0];v.lng=curLL[1];delete v.geoFail}
+  if(editing){if(editing.addr!==v.addr&&!curLL){delete editing.lat;delete editing.lng;delete editing.geoFail}Object.assign(editing,v)}else S.listings.push({id:curId,fav:false,addedBy:ME.email,addedAt:new Date().toISOString().slice(0,10),...v});
+  save();render();geocodeAll();
+});
+let curLL=null;
+$('fetchBtn').onclick=async()=>{
+  const url=$('fLink').value.trim(),msg=$('fMsg');
+  if(!url){msg.textContent='Paste a listing link first.';return}
+  msg.textContent='Reading the listing…';
+  try{
+    const d=await (await fetch(WORKER_URL+'?url='+encodeURIComponent(url))).json();
+    if(d.error)throw new Error(d.error);
+    if(d.addr)$('fAddr').value=d.addr;if(d.price)$('fPrice').value=d.price;
+    if(d.beds!=null)$('fBeds').value=d.beds;if(d.baths!=null)$('fBaths').value=d.baths;
+    $('fGarden').checked=!!d.garden;if(d.img)$('fImg').value=d.img;
+    if(d.notes&&!$('fNotes').value)$('fNotes').value=d.notes;
+    curLL=d.lat!=null?[d.lat,d.lng]:null;
+    msg.textContent='Filled in what was found. Check it before saving.';
+  }catch(e){msg.textContent='Couldn’t read that listing ('+e.message+'). Fill it in by hand.'}
+};
+$('fLink').addEventListener('paste',()=>setTimeout(()=>{if(!editing)$('fetchBtn').click()},50));
+
+/* uploaded video tours live in the browser's IndexedDB (too big for localStorage) */
+const vdb=()=>new Promise((ok,no)=>{const r=indexedDB.open('flatHuntVideos',1);r.onupgradeneeded=()=>r.result.createObjectStore('v');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
+const vtx=async(mode,fn)=>{const db=await vdb();return new Promise((ok,no)=>{const t=db.transaction('v',mode);const rq=fn(t.objectStore('v'));t.oncomplete=()=>ok(rq&&rq.result);t.onerror=()=>no(t.error)})};
+const vput=(id,f)=>vtx('readwrite',o=>o.put(f,id));
+const vget=id=>vtx('readonly',o=>o.get(id));
+const vdel=id=>vtx('readwrite',o=>o.delete(id));
+async function showVid(){
+  const v=$('fVid');$('fVMsg').textContent=curVideo?'Stored in this browser: '+curVideo:'';$('fVRm').style.display=curVideo?'':'none';
+  if(curVideo){try{const b=await vget(curId);if(b){v.src=URL.createObjectURL(b);v.style.display='block';return}}catch(e){}}
+  v.removeAttribute('src');v.style.display='none';
+}
+$('fVFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;
+  try{await vput(curId,f);curVideo=f.name;showVid()}catch(x){$('fVMsg').textContent='This browser couldn’t store that video. Paste a link instead.'}};
+$('fVRm').onclick=async()=>{try{await vdel(curId)}catch(e){}curVideo='';if(editing){editing.videoName='';save();render()}showVid()};
+$('fArch').onclick=()=>{if(editing){editing.archived=!editing.archived;save();render();$('dlg').close()}};
+$('fLetter').onclick=()=>{if(editing){$('dlg').close();openLetter(editing.id)}};
+
+/* pet refusal letter */
+let lCur=null;
+const LF={lTo:'to',lName:'name',lContact:'contact',lPet:'pet',lDate:'date',lAgent:'agent',lAgentEmail:'agentEmail',lHow:'how',lReason:'reason'};
+function openLetter(id){
+  lCur=S.listings.find(x=>x.id===id);
+  const d={to:'agent',how:'by phone',...(S.me||{}),...(lCur.petInfo||{})};
+  for(const k in LF)$(k).value=d[LF[k]]||'';
+  if(!$('lAgent').value)$('lAgent').value=site(lCur.link);
+  if(!$('lHow').value)$('lHow').value='by phone';
+  $('lMsg').textContent='';buildLetter();$('ltr').showModal();
+}
+function buildLetter(){
+  const l=lCur,i={};for(const k in LF)i[LF[k]]=$(k).value.trim();
+  l.petInfo=i;S.me={name:i.name,contact:i.contact,pet:i.pet};save();
+  const when=i.date?new Date(i.date+'T12:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}):'[date]';
+  const pet=i.pet||'a pet',who=i.agent||'Sir or Madam';
+  const prop=`${l.addr}, advertised at £${l.price} per month${l.beds!=null?` (${l.beds} bed${l.baths!=null?', '+l.baths+' bath':''})`:''}${l.link?`\nListing: ${l.link}`:''}`;
+  const told=`${i.how||'by phone'}${i.reason?`, with the reason given as: “${i.reason}”`:''}`;
+  const sign=`${i.name||'[your name]'}\n${i.contact||'[your contact details]'}`;
+  const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  let subj,body;
+  if(i.to==='council'){
+    subj=`Report and request for advice: refusal to let because of a pet, ${l.addr}`;
+    body=`${today}\n\nTo the Private Sector Housing / Trading Standards team,\n\nI am a prospective tenant in England and would like to report, and ask for your advice on, the following.\n\nProperty: ${prop}\nAgent or landlord: ${i.agent||'[name]'}${i.agentEmail?' ('+i.agentEmail+')':''}\n\nOn ${when} I was told ${told} that I could not go ahead with this property because I own ${pet}.\n\nI understand that the Renters’ Rights Act 2025, in force from 1 May 2026, gives tenants in England a right to request a pet that a landlord must not unreasonably refuse. I am not sure whether a refusal at the application stage falls under those rules, so I would be grateful if you could tell me:\n1. Whether this refusal, or a blanket no-pets approach by this agent or landlord, breaches the Act or any other rules you enforce.\n2. Whether you can look into this agent or landlord, and what evidence you need from me.\n3. Whether I should refer this to a redress scheme instead.\n\nI can provide the listing and any messages I received.\n\nYours faithfully,\n${sign}`;
+  }else{
+    subj=`Written reason for pet-related refusal: ${l.addr}`;
+    body=`${today}\n\nDear ${who},\n\nI enquired about the following property:\n${prop}\n\nOn ${when} I was told ${told} that I could not go ahead with it because I own ${pet}.\n\nPlease could you confirm in writing:\n1. The reason my application was declined because of my pet.\n2. Whether this was the landlord’s decision or your agency’s policy, and whether it applies to every applicant with a pet.\n3. Which redress scheme your agency belongs to.\n\nI understand that, since 1 May 2026, the Renters’ Rights Act 2025 gives tenants in England the right to request a pet, and landlords must not unreasonably refuse. I appreciate that this right applies once a tenancy has started, so I would also like to know how a pet request would be handled if I became a tenant of this property.\n\nI am keeping a copy of this letter and may share it with the local council or a redress scheme if I need advice.\n\nYours sincerely,\n${sign}`;
+  }
+  $('lText').value='Subject: '+subj+'\n\n'+body;
+}
+Object.keys(LF).forEach(k=>$(k).addEventListener('input',buildLetter));
+$('lMail').onclick=()=>{const t=$('lText').value,n=t.indexOf('\n\n');
+  location.href='mailto:'+($('lTo').value==='agent'?$('lAgentEmail').value:'')+'?subject='+encodeURIComponent(t.slice(9,n))+'&body='+encodeURIComponent(t.slice(n+2))};
+$('lCopy').onclick=async()=>{try{await navigator.clipboard.writeText($('lText').value);$('lMsg').textContent='Copied.'}catch(e){$('lText').select();$('lMsg').textContent='Press Ctrl+C (or Cmd+C) to copy.'}};
+$('lDl').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([$('lText').value],{type:'text/plain'}));a.download='pet-refusal-letter.txt';a.click()};
+$('lClose').onclick=()=>{$('ltr').close();render()};
+
+/* map + geocoding (OpenStreetMap) */
+async function geo(q){
+  const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=gb&q='+encodeURIComponent(q));
+  const d=await r.json();return d[0]?[+d[0].lat,+d[0].lon]:null;
+}
+$('pWork').addEventListener('change',async()=>{try{const c=await geo($('pWork').value);if(c){S.prefs.workLL=c;save();render()}}catch(e){}});
+let geoBusy=false;
+function mapNote(){const f=S.listings.filter(l=>l.geoFail).length;$('mapMsg').textContent=f?`${f} listing${f>1?'s':''} couldn’t be placed. Edit the address and add the postcode.`:''}
+async function geocodeAll(){
+  if(geoBusy)return;geoBusy=true;
+  for(const l of S.listings.filter(x=>x.lat==null&&!x.geoFail)){
+    $('mapMsg').textContent='Locating '+l.addr+'…';
+    try{const c=await geo(l.addr);if(c){l.lat=c[0];l.lng=c[1]}else l.geoFail=1}catch(e){$('mapMsg').textContent='Couldn’t reach the location service. Check your internet connection.';geoBusy=false;return}
+    save();render();
+    await new Promise(r=>setTimeout(r,1100));
+  }
+  geoBusy=false;mapNote();
+}
+function renderMap(){
+  if(typeof L==='undefined'){$('mapMsg').textContent='The map library didn’t load. Connect to the internet and reload.';return}
+  if(!map){map=L.map('map').setView([51.76,-1.26],11);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);
+    layer=L.layerGroup().addTo(map)}
+  fitted=false;setTimeout(()=>{map.invalidateSize();drawMap()},60);
+  mapNote();geocodeAll();
+}
+function drawMap(){
+  layer.clearLayers();const pts=[];
+  if(S.prefs.workLL){L.marker(S.prefs.workLL,{icon:L.divIcon({className:'',html:'<div class="work">Work</div>',iconSize:[50,26],iconAnchor:[25,13]})}).addTo(layer).bindPopup(esc(S.prefs.work));pts.push(S.prefs.workLL)}
+  S.listings.forEach(l=>{
+    if(l.lat==null||l.archived)return;const i=rk(l);const m=misses(l);
+    L.marker([l.lat,l.lng],{icon:L.divIcon({className:'',html:`<div class="bubble" style="--ring:${ring(m.n)}">${i+1}</div>`,iconSize:[34,34],iconAnchor:[17,17]})})
+      .addTo(layer).bindPopup(`<b>#${i+1} ${esc(l.addr)}</b><br>${gbp(l.price)}/mo · ${usd(l.price)}/mo<br>${l.beds??'–'} bed · ${l.baths??'–'} bath<br>${distTxt(l)}<br>${m.n?'Misses '+m.n+': '+esc(m.why.join(', ')):'Meets every preference'}`);
+    pts.push([l.lat,l.lng]);
+  });
+  if(pts.length>1&&!fitted){map.fitBounds(pts,{padding:[40,40]});fitted=true}
+}
+
+/* backup */
+$('exp').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'}));a.download='flat-hunt-backup.json';a.click()};
+$('imp').onclick=()=>$('file').click();
+$('file').onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());if(d.listings){S=d;S.prefs=Object.assign(defP(),S.prefs);save();loadPrefs();render();geocodeAll()}}catch(x){alert('That file isn’t a Flat hunt backup.')}};
+
+/* sign-in, shared data, per-person settings */
+const ALLOWED=['natalie@sorensn.com','avxblack@gmail.com'];
+firebase.initializeApp(FB);const auth=firebase.auth(),fs=firebase.firestore();
+let ME={email:'',name:''},ready=false,pend=0,tmr,unsub;
+const ref=()=>fs.collection('hunt').doc('shared'),uref=()=>fs.collection('users').doc(auth.currentUser.uid);
+const nm=e=>(S.names&&S.names[e])||String(e).split('@')[0];
+function fillBy(){['bBy','qBy'].forEach(id=>{const x=$(id),v=x.value;x.innerHTML='<option value="">Anyone</option>'+ALLOWED.map(e=>`<option value="${e}">${esc(nm(e))}</option>`).join('');x.value=v})}
+function applyTheme(t){try{localStorage.setItem('fh.theme',t)}catch(e){}const r=document.documentElement;t==='light'||t==='dark'?r.dataset.theme=t:r.removeAttribute('data-theme')}
+applyTheme(localStorage.getItem('fh.theme')||'system');
+const openAuth=m=>{if(m)$('aMsg').textContent=m;if(!$('auth').open)$('auth').showModal()};
+$('auth').addEventListener('cancel',e=>e.preventDefault());
+const okMail=()=>$('aEmail').value.trim().toLowerCase();
+const fail=e=>{$('aMsg').textContent=e.message.replace('Firebase: ','')};
+$('aIn').onclick=()=>auth.signInWithEmailAndPassword(okMail(),$('aPass').value).catch(fail);
+$('aUp').onclick=async()=>{if(!ALLOWED.includes(okMail()))return fail({message:'This app is private to two people. That email isn’t on the list.'});
+  try{const c=await auth.createUserWithEmailAndPassword(okMail(),$('aPass').value);await c.user.sendEmailVerification();openAuth('Verification email sent. Click the link in it, then press Continue.')}catch(e){fail(e)}};
+$('aReset').onclick=()=>auth.sendPasswordResetEmail(okMail()).then(()=>$('aMsg').textContent='Password reset email sent.').catch(fail);
+$('aResend').onclick=()=>auth.currentUser.sendEmailVerification().then(()=>$('aMsg').textContent='Sent again.').catch(fail);
+$('aDone').onclick=async()=>{await auth.currentUser.reload();proceed(auth.currentUser)};
+$('sOut').onclick=()=>auth.signOut();
+async function proceed(u){
+  const em=(u.email||'').toLowerCase();
+  if(!ALLOWED.includes(em)){await auth.signOut();openAuth('This app is private to two people. '+em+' isn’t on the list.');return}
+  if(!u.emailVerified){$('aVer').style.display='flex';openAuth('Please verify your email (check your inbox), then press Continue.');return}
+  await u.getIdToken(true);ME.email=em;let d={};
+  try{d=(await uref().get()).data()||{}}catch(e){}
+  ME.name=d.name||nm(em);if(d.theme)applyTheme(d.theme);
+  $('sWho').textContent=em;$('sName').value=ME.name;$('sTheme').value=localStorage.getItem('fh.theme')||'system';
+  $('aVer').style.display='none';$('auth').close();listen();
+}
+function listen(){
+  unsub=ref().onSnapshot(s=>{
+    if(!s.exists){ready=true;S.names=S.names||{};save();return}
+    if(s.metadata.hasPendingWrites||pend)return;
+    try{const d=JSON.parse(s.data().json);if(d&&d.listings){S=d;S.prefs=Object.assign(defP(),S.prefs);S.names=S.names||{};ready=true;loadPrefs();render();geocodeAll()}}catch(e){}
+  },e=>openAuth('Couldn’t load data: '+e.message));
+}
+$('sName').addEventListener('change',()=>{ME.name=$('sName').value.trim()||ME.email.split('@')[0];S.names=S.names||{};S.names[ME.email]=ME.name;save();render();uref().set({name:ME.name},{merge:true}).catch(()=>{})});
+$('sTheme').addEventListener('change',()=>{applyTheme($('sTheme').value);uref().set({theme:$('sTheme').value},{merge:true}).catch(()=>{})});
+auth.onAuthStateChanged(u=>{if(unsub){unsub();unsub=null}ready=false;if(u)proceed(u);else{$('aVer').style.display='none';openAuth()}});
+loadPrefs();render();
+</script>
+</body>
+</html>
